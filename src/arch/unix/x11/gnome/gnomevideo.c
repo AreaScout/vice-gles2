@@ -177,7 +177,7 @@ video_canvas_t *video_canvas_create(video_canvas_t *canvas, unsigned int *width,
     /* canvas->cairo_ctx = gdk_cairo_create(gtk_widget_get_window(canvas->emuwindow)); */
 #endif
 
-#ifdef HAVE_HWSCALE
+#if defined(HAVE_HWSCALE) || defined(HAVE_GLES2)
     canvas->hwscale_image = NULL;
 #endif
 
@@ -210,7 +210,7 @@ void video_canvas_destroy(video_canvas_t *canvas)
     /* FIXME */
 #endif
 
-#if defined(HAVE_HWSCALE) && !defined(USE_UI_THREADS)
+#if defined(HAVE_HWSCALE) && !defined(USE_UI_THREADS) || defined(HAVE_GLES2) && !defined(USE_UI_THREADS)
         lib_free(canvas->hwscale_image);
 #endif
     }
@@ -256,7 +256,7 @@ void video_canvas_resize(video_canvas_t *canvas, char resize_canvas)
     canvas->gdk_pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, 0, 8, imgw, imgh);
 #endif
 
-#ifdef HAVE_HWSCALE
+#if defined(HAVE_HWSCALE) || defined(HAVE_GLES2)
 #ifdef USE_UI_THREADS
     mbuffer_init(canvas, imgw, imgh, 4, canvas->app_shell);
 #else
@@ -331,8 +331,8 @@ void video_canvas_refresh(video_canvas_t *canvas, unsigned int xs, unsigned int 
 	return;
     }
 
-#ifdef HAVE_HWSCALE
-    if (canvas->videoconfig->hwscale) {
+#if defined(HAVE_HWSCALE) || defined(HAVE_GLES2)
+    if (canvas->videoconfig->hwscale || canvas->fullscreenconfig->enable) {
 #ifdef USE_UI_THREADS
 	struct timespec t1[MAX_APP_SHELLS];
 	clock_gettime(CLOCK_REALTIME, &t1[canvas->app_shell]);
@@ -342,7 +342,12 @@ void video_canvas_refresh(video_canvas_t *canvas, unsigned int xs, unsigned int 
         video_canvas_render(canvas, canvas->hwscale_image, 
 			    w, h, xs, ys, xi, yi, 
 			    canvas->draw_buffer->canvas_physical_width * 4, 32);
+#ifdef HAVE_GLES2
+        /* HACK: gtk draws it's window still in forground, so we are try to draw offscreen with x/y positon */
+        gtk_widget_queue_draw_area(canvas->emuwindow, canvas->disp_w - 2, canvas->disp_h - 2, w, h);
+#else
         gtk_widget_queue_draw(canvas->emuwindow);
+#endif
 #if 0
 	/* timing probe */
 	{
