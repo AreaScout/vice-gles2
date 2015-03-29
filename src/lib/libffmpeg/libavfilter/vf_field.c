@@ -111,8 +111,9 @@ static const AVFilterPad field_outputs[] = {
         AVMEDIA_TYPE_VIDEO,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, config_props_output,
 #else
-	.name         = "default",
+		.name         = "default",
         .type         = AVMEDIA_TYPE_VIDEO,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, config_props_output,
         .config_props = config_props_output,
 #endif
 	},
