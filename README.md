@@ -1,4 +1,4 @@
-# VICE - GLES2 PORT
+## VICE - GLES2 PORT
 
 $ git clone https://github.com/AreaScout/vice-gles2.git
 
