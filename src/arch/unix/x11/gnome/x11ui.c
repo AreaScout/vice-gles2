@@ -101,6 +101,10 @@
 #ifdef USE_UI_THREADS
 #include "ui-threads.h"
 #endif
+#ifdef HAVE_GLES2
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#endif
 
 #if defined(USE_XF86_EXTENSIONS) || !defined(HAVE_VTE)
 #include <gdk/gdkx.h>
@@ -146,6 +150,16 @@ static int popped_up_count = 0;
 static GdkGC *app_gc = NULL;
 #endif
 
+#ifdef HAVE_GLES2
+EGLDisplay m_display = NULL;
+EGLSurface m_surface = NULL;
+EGLContext m_context = NULL;
+GLuint program;
+static gboolean canvas_init = FALSE;
+int ui_egl_open_display(video_canvas_t *c);
+int ui_egl_close_display();
+#endif
+
 /* GdkColormap *colormap; */
 
 app_shell_type app_shells[MAX_APP_SHELLS]; /* FIXME: we want this to be the exclusive global info */
@@ -168,6 +182,20 @@ static void setup_aspect_geo(video_canvas_t *canvas, int winw, int winh);
 static gfloat get_aspect(video_canvas_t *canvas);
 
 void ui_trigger_resize(void);
+
+float vertices[4][3] = {
+		{-1, -1, 0},
+		{ 1, -1, 0},
+		{-1,  1, 0},
+		{ 1,  1, 0}
+};
+
+float coords[4][2] = {
+		{0, 1},
+		{1, 1},
+		{0, 0},
+		{1, 0}
+};
 
 /******************************************************************************/
 #if !defined(HAVE_CAIRO)
@@ -487,6 +515,11 @@ int ui_init_finish()
 #else
     char *usegl = "no";
 #endif
+#ifdef HAVE_GLES2
+    char *usegles2 = "yes";
+#else
+    char *usegles2 = "no";
+#endif
 #ifdef HAVE_FULLSCREEN
     char *usefs = "yes";
 #else
@@ -504,7 +537,7 @@ int ui_init_finish()
 #endif
     ui_log = log_open("X11");
 
-    log_message(ui_log, "GTK version compiled with: %d.%d (xf86 ext:%s cairo:%s pango:%s VTE:%s hwscale:%s fullscreen:%s ui-threads:%s)", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, usexf86ext, usecairo, usepango, usevte, usegl, usefs, useuithreads);
+    log_message(ui_log, "GTK version compiled with: %d.%d (xf86 ext:%s cairo:%s pango:%s VTE:%s hwscale_gles2:%s hwscale:%s fullscreen:%s ui-threads:%s)", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, usexf86ext, usecairo, usepango, usevte, usegles2, usegl, usefs, useuithreads);
 
 #ifdef HAVE_PANGO
     have_cbm_font = TRUE;
@@ -550,6 +583,10 @@ void ui_shutdown(void)
         shutdown_pal_ctrl_widget(app_shells[i].pal_ctrl, app_shells[i].pal_ctrl_data);
     }
     shutdown_file_selector();
+#ifdef HAVE_GLES2
+    if(ui_egl_close_display())
+        log_message(ui_log, "EGL: display closed");
+#endif
 }
 
 /* exit the application */
@@ -756,6 +793,9 @@ int ui_open_canvas_window2(video_canvas_t *c, const char *title, int w, int h, i
 int ui_open_canvas_window(video_canvas_t *c, const char *title, int w, int h, int no_autorepeat) 
 #endif
 {
+#ifdef HAVE_GLES2
+    canvas_init = TRUE;
+#endif
     GtkWidget *new_window, *topmenu, *panelcontainer, *pal_ctrl_widget = NULL;
     GtkAccelGroup* accel;
     GdkColor black = { 0, 0, 0, 255 };
@@ -925,8 +965,180 @@ GDK_SUBSTRUCTURE_MASK          Receive  GDK_STRUCTURE_MASK events for child wind
                             GDK_EXPOSURE_MASK);
 
     ui_dispatch_events();
+
+	if (ui_egl_open_display(c) < 0)
+    {
+        log_error(ui_log, "EGL: couldn't open display");
+        return -1;
+    }
+
+	return 0;
+}
+
+#ifdef HAVE_GLES2
+int ui_egl_open_display(video_canvas_t *c)
+{
+    GLint ret;
+    GLuint texture;
+    // config OpenGL ES2.0
+    static const EGLint context_attributes[] =
+    {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
+
+    if (m_display)
+    {
+        if (ui_egl_close_display() != EGL_TRUE)
+            return -1;
+    }
+
+    m_display = eglGetDisplay((EGLNativeDisplayType) x11ui_get_display_ptr());
+
+    if (m_display == EGL_NO_DISPLAY)
+    {
+        log_error(ui_log,"EGL: error getting display");
+    }
+    // initialize the EGL display connection
+    int egl_major, egl_minor;
+
+    int result = eglInitialize(m_display, &egl_major, &egl_minor);
+    log_message(ui_log, "EGL: init version %d.%d", egl_major, egl_minor);
+    if (result == EGL_FALSE)
+    {
+        log_error(ui_log, "EGL: error initialising display");
+    }
+    // get an appropriate EGL frame buffer configuration
+    EGLint num_config;
+    EGLConfig config;
+    static const EGLint attribute_list[] =
+    {
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_NONE
+    };
+    result = eglChooseConfig(m_display, attribute_list, &config, 1, &num_config);
+    // bind the OpenGL ES API to the EGL
+    result = eglBindAPI(EGL_OPENGL_ES_API);
+    if (result == EGL_FALSE)
+    {
+        log_error(ui_log, "EGL: error binding API");
+    }
+    // create an EGL rendering context
+    m_context = eglCreateContext(m_display, config, EGL_NO_CONTEXT, context_attributes);
+    if (m_context == EGL_NO_CONTEXT)
+    {
+        log_error(ui_log, "EGL: couldn't get a valid context");
+    }
+    // finally we can create a new surface using this config and window
+    m_surface = eglCreateWindowSurface( m_display, config, (NativeWindowType)x11ui_get_X11_window(), NULL );
+    // connect the context to the surface
+    result = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
+
+    const char* vertex_shader_source =
+	    "attribute vec4 in_vertex;\n"
+	    "attribute vec2 in_coord;\n"
+	    "\n"
+	    "varying vec2 coord;\n"
+	    "\n"
+	    "void main()\n"
+	    "{\n"
+	    " gl_Position = in_vertex;\n"
+	    " coord = in_coord;\n"
+	    "}\n";
+
+    const char* fragment_shader_source =
+	    "precision mediump float;\n"
+        "\n"
+	    "varying vec2 coord;\n"
+	    "\n"
+	    "uniform sampler2D in_texture;\n"
+	    "void main()\n"
+	    "{\n"
+	    " gl_FragColor = texture2D(in_texture, coord);\n"
+	    "}\n";
+
+    Display *XDisplay = XOpenDisplay(NULL);
+    if (!XDisplay) {
+        log_error(ui_log, "EGL: Error: failed to open X display.\n");
+        return -1;
+    }
+
+    int screen_num = DefaultScreen(XDisplay);
+    c->disp_w = DisplayWidth(XDisplay, screen_num);
+    c->disp_h = DisplayHeight(XDisplay, screen_num);
+
+    XCloseDisplay(XDisplay);
+
+    glViewport(0, 0, c->disp_w, c->disp_h);
+
+    int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
+    glCompileShader(vertex_shader);
+
+    int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
+    glCompileShader(fragment_shader);
+
+    program = glCreateProgram();
+    if (!program) {
+        log_error(ui_log, "Error: failed to create program!\n");
+        return -1;
+    }
+
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+
+    glBindAttribLocation(program, 0, "in_vertex");
+    glBindAttribLocation(program, 1, "in_coord");
+
+    glLinkProgram(program);
+
+    glGetProgramiv(program, GL_LINK_STATUS, &ret);
+    if (!ret) {
+        char *log;
+
+        log_error(ui_log, "Error: program linking failed!:\n");
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &ret);
+
+        if (ret > 1) {
+            log = malloc(ret);
+            glGetProgramInfoLog(program, ret, NULL, log);
+            log_error(ui_log, "%s", log);
+            free(log);
+        }
+        return -1;
+    }
+
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    canvas_init = FALSE;
+
     return 0;
 }
+
+int ui_egl_close_display()
+{
+    eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    if(eglDestroySurface(m_display, m_surface) && eglDestroyContext(m_display, m_context) && eglTerminate(m_display))
+    {
+        m_display = m_surface = m_context = NULL;
+        return EGL_TRUE;
+    }
+    return EGL_FALSE;
+}
+#endif
 
 void ui_set_topmenu(ui_menu_entry_t *menu)
 {
@@ -1100,10 +1312,34 @@ int x11ui_fullscreen(int enable)
          * This can happen especially when using XRandR to resize the desktop.
          * This tries to workaround that problem by ensuring hinting that the
          * window should be placed to the top-left corner. GTK/X sucks. */
+#ifdef HAVE_GLES2
+		// Display resolution may have been changed via settings inside emulator, so ask xserver and set viewport accordingly
+        Display *XDisplay = XOpenDisplay(NULL);
+        if (!XDisplay) {
+            log_error(ui_log, "EGL: Error: failed to open X display.\n");
+            return -1;
+        }
+
+        int screen_num = DefaultScreen(XDisplay);
+        canvas->disp_w = DisplayWidth(XDisplay, screen_num);
+        canvas->disp_h = DisplayHeight(XDisplay, screen_num);
+
+        XCloseDisplay(XDisplay);
+
+        glViewport(0, 0, canvas->disp_w, canvas->disp_h);
+        // Resize and set size of Window accordingly, in just that sequence
+        ui_resize_canvas_window(canvas);
+        gtk_widget_set_size_request(canvas->emuwindow, canvas->disp_w, canvas->disp_h);
+        gtk_window_resize(GTK_WINDOW(s), canvas->disp_w, canvas->disp_h);
+#endif
         gtk_window_move(GTK_WINDOW(s), 0, 0);
         gtk_window_fullscreen(GTK_WINDOW(s));
         gtk_window_present(GTK_WINDOW(s));
         ui_dispatch_events();
+#ifdef HAVE_GLES2
+        // We are rendering in two buffers (fullscreen and non-fullscreen buffer), we have to refresh here because one buffer is always pausing
+        video_canvas_refresh_all(canvas);
+#endif
         gdk_flush();
     } else {
         canvas->fullscreenconfig->enable = 0;
@@ -1115,8 +1351,17 @@ int x11ui_fullscreen(int enable)
 
         /* restore previously saved window dimensions */
         DBG(("x11ui_fullscreen (fs:%d restore winx: %d winy: %d winw: %d winh: %d)", enable, fsoldx, fsoldy, fsoldw, fsoldh));
+#ifdef HAVE_GLES2
+        gtk_widget_set_size_request(canvas->emuwindow, fsoldw, fsoldh);
+#endif
         gtk_window_resize(GTK_WINDOW(s), fsoldw, fsoldh);
         gtk_window_move(GTK_WINDOW(s), fsoldx, fsoldy);
+#ifdef HAVE_GLES2
+        // Restore everything
+        ui_resize_canvas_window(canvas);
+        // Refresh buffer
+        video_canvas_refresh_all(canvas);
+#endif
     }
     ui_check_mouse_cursor();
     ui_dispatch_events();
@@ -1203,8 +1448,8 @@ static gfloat get_aspect(video_canvas_t *canvas)
     if (keep_aspect_ratio) {
         resources_get_int("TrueAspectRatio", &true_aspect_ratio);
         if (true_aspect_ratio) {
-#ifdef HAVE_HWSCALE
-            if (canvas->videoconfig->hwscale) {
+#if defined(HAVE_HWSCALE) || defined(HAVE_GLES2)
+         if (canvas->videoconfig->hwscale || canvas->fullscreenconfig->enable) {
                 return canvas->geometry->pixel_aspect_ratio;
             }
 #endif
@@ -1247,8 +1492,8 @@ static void setup_aspect_geo(video_canvas_t *canvas, int winw, int winh)
             appshell->geo.min_aspect = aspect;
             appshell->geo.max_aspect = aspect;
             appshell->geo.min_width = (int)((float)winw * taspect);
-	    appshell->geo.max_width = 0;
-	    appshell->geo.max_height = 0;
+            appshell->geo.max_width = 0;
+            appshell->geo.max_height = 0;
         }
 /*
 #ifdef HAVE_FULLSCREEN
@@ -1288,14 +1533,14 @@ void ui_resize_canvas_window(video_canvas_t *canvas)
     DBG(("ui_resize_canvas_window (winw: %d winh: %d hwscale:%d)", window_width, window_height,canvas->videoconfig->hwscale));
 
     def = 0;
-    if (!canvas->videoconfig->hwscale || (window_width < WINDOW_MINW) || (window_height < WINDOW_MINH)) {
+    if (!canvas->videoconfig->hwscale || ! canvas->fullscreenconfig->enable || (window_width < WINDOW_MINW) || (window_height < WINDOW_MINH)) {
         def = 1;
         window_width = canvas->draw_buffer->canvas_physical_width;
         window_height = canvas->draw_buffer->canvas_physical_height;
     }
 
     build_screen_canvas_widget(canvas);
-    if (! canvas->videoconfig->hwscale) {
+    if (! canvas->videoconfig->hwscale || ! canvas->fullscreenconfig->enable) {
         gtk_widget_set_size_request(canvas->emuwindow, window_width, window_height);
     }
 
@@ -1936,6 +2181,30 @@ void gl_render_canvas(GtkWidget *w, video_canvas_t *canvas,
 }
 #endif  /* HAVE_HWSCALE */
 
+#ifdef HAVE_GLES2
+void gles2_render_canvas(struct s_mbufs *buffer)
+{
+	glUseProgram(program);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buffer->w, buffer->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer->buffer);
+
+	GLint texture_loc = glGetUniformLocation(program, "in_texture");
+	glUniform1i(texture_loc, 0); // 0 -> GL_TEXTURE0 in glActiveTexture
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, coords);
+	glEnableVertexAttribArray(1);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	eglSwapBuffers(m_display, m_surface);
+}
+#endif
+
 void gtk_render_canvas(GtkWidget *w, GdkEventExpose *e, gpointer client_data,
 		       video_canvas_t *canvas)
 {
@@ -2000,6 +2269,19 @@ gboolean exposure_callback_canvas(GtkWidget *w, GdkEventExpose *e, gpointer clie
 	return 0;
     }
 #endif	/* HAVE_HWSCALE */
-    gtk_render_canvas(w, e, client_data, canvas);
+#ifdef HAVE_GLES2
+    if (canvas->fullscreenconfig->enable)
+    {
+        static struct s_mbufs t;
+        t.w = canvas->draw_buffer->canvas_physical_width;
+        t.h = canvas->draw_buffer->canvas_physical_height;
+        if(!canvas->hwscale_image)
+            return 0;
+        t.buffer = canvas->hwscale_image;
+        gles2_render_canvas(&t);
+    }
+    else
+#endif
+        gtk_render_canvas(w, e, client_data, canvas);
     return 0;
 }
