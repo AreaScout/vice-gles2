@@ -1,4 +1,6 @@
-## VICE - GLES2 PORT
+## VICE - GLES2 port
+
+#### This VICE port is in sync with upstream
 
 $ git clone https://github.com/AreaScout/vice-gles2.git
 
