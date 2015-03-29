@@ -2,21 +2,18 @@
 
 #### This VICE port is in sync with upstream
 
-$ git clone https://github.com/AreaScout/vice-gles2.git
-
-$ cd vice-gles2
-
-$ sudo apt-get install flex bison autogen automake libgtk-3-dev libcairo2-dev texinfo libreadline-dev
-
-$ ./autogen.sh
-
-$ ./configure --enable-gles2 --enable-gnomeui3 --enable-static-ffmpeg
-
-$ make
-
-$ sudo make install
-
-
+``` shell
+git clone https://github.com/AreaScout/vice-gles2.git
+cd vice-gles2
+sudo apt-get install flex bison autogen automake libgtk-3-dev libcairo2-dev texinfo libreadline-dev
+./autogen.sh
+./configure --enable-gles2 --enable-gnomeui3 --enable-static-ffmpeg
+make
+sudo make install
+```
+<br>
+-------
+<br>
 
   VICE  2.4                                                        Nov 2012
 
