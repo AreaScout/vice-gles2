@@ -1,12 +1,19 @@
 # VICE - GLES2 PORT
 
 $ git clone https://github.com/AreaScout/vice-gles2.git
+
 $ cd vice-gles2
+
 $ sudo apt-get install flex bison autogen automake libgtk-3-dev libcairo2-dev texinfo libreadline-dev
+
 $ ./autogen.sh
+
 $ ./configure --enable-gles2 --enable-gnomeui3 --enable-static-ffmpeg
+
 $ make
+
 $ sudo make install
+
 
 
   VICE  2.4                                                        Nov 2012
