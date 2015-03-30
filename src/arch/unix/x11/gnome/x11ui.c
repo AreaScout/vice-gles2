@@ -153,6 +153,7 @@ static GdkGC *app_gc = NULL;
 EGLDisplay m_display = NULL;
 EGLSurface m_surface = NULL;
 EGLContext m_context = NULL;
+NativeWindowType win;
 GLuint program;
 static gboolean canvas_init = FALSE;
 int ui_egl_open_display(video_canvas_t *c);
@@ -1034,7 +1035,8 @@ int ui_egl_open_display(video_canvas_t *c)
         log_error(ui_log, "EGL: couldn't get a valid context");
     }
     // finally we can create a new surface using this config and window
-    m_surface = eglCreateWindowSurface( m_display, config, (NativeWindowType)x11ui_get_X11_window(), NULL );
+    win = (NativeWindowType)x11ui_get_X11_window();
+    m_surface = eglCreateWindowSurface( m_display, config, win, NULL );
     // connect the context to the surface
     result = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 
@@ -1323,6 +1325,11 @@ int x11ui_fullscreen(int enable)
         XCloseDisplay(XDisplay);
 
         glViewport(0, 0, canvas->disp_w, canvas->disp_h);
+        // TODO: x128 emulation starts with two windows, however EGL does init two times on start,
+        //       maybe it's to early to get the pointer to the new created window, this solves it for now
+        if (win != (NativeWindowType)x11ui_get_X11_window())
+            ui_egl_open_display(canvas);
+
         // Resize and set size of Window accordingly, in just that sequence
         ui_resize_canvas_window(canvas);
         gtk_widget_set_size_request(canvas->emuwindow, canvas->disp_w, canvas->disp_h);
