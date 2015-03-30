@@ -990,6 +990,7 @@ int ui_egl_open_display(video_canvas_t *c)
     {
         if (ui_egl_close_display() != EGL_TRUE)
             return -1;
+        m_display = m_surface = m_context = NULL;
     }
 
     m_display = eglGetDisplay((EGLNativeDisplayType) x11ui_get_display_ptr());
