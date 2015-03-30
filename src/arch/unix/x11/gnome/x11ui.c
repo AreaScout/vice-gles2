@@ -964,13 +964,13 @@ GDK_SUBSTRUCTURE_MASK          Receive  GDK_STRUCTURE_MASK events for child wind
                             GDK_EXPOSURE_MASK);
 
     ui_dispatch_events();
-
-	if (ui_egl_open_display(c) < 0)
+#ifdef HAVE_GLES2
+    if (ui_egl_open_display(c) < 0)
     {
         log_error(ui_log, "EGL: couldn't open display");
         return -1;
     }
-
+#endif
 	return 0;
 }
 
