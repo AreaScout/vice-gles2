@@ -1336,7 +1336,7 @@ int x11ui_fullscreen(int enable)
         resources_get_int("KeepAspectRatio", &keep_aspect_ratio);
 
         // support 4:3, 16:9 and 16:10 aspect ratio ( HDMI XU3 has only 16:9 but displayport supports more -> not tested )		
-		if(keep_aspect_ratio)
+        if(keep_aspect_ratio)
         {
             if((canvas->disp_w * 9) == (canvas->disp_h * 16))
                 val = 1/(1.0f / 9 * 4 * 3);
