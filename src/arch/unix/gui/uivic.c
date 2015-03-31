@@ -112,6 +112,10 @@ static int get_hw_scale(int m)
 UI_MENU_DEFINE_TOGGLE_COND(AlphaBlending, VICHwScale, get_hw_scale)
 #endif
 
+#ifdef HAVE_GLES2
+UI_MENU_DEFINE_TOGGLE(KeepAspectRatio)
+#endif
+
 #ifdef HAVE_HWSCALE
 static int get_aspect_enabled(int m)
 {
@@ -212,6 +216,10 @@ ui_menu_entry_t vic_submenu[] = {
 #endif
 #ifdef HAVE_FULLSCREEN
     { "--", UI_MENU_TYPE_SEPARATOR },
+#ifdef HAVE_GLES2
+    { N_("Keep aspect ratio"), UI_MENU_TYPE_TICK,
+      (ui_callback_t)toggle_KeepAspectRatio, NULL, NULL },
+#endif
     { N_("Fullscreen settings"), UI_MENU_TYPE_NORMAL, NULL, NULL, fullscreen_menuVIC },
 #endif
 #ifndef USE_GNOMEUI
