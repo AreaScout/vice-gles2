@@ -1463,9 +1463,11 @@ static void toggle_aspect(video_canvas_t *canvas)
             resources_get_int("KeepAspectRatio", &keep_aspect_ratio);
             if (keep_aspect_ratio) {
                 flags |= GDK_HINT_ASPECT;
+#ifndef HAVE_GLES2
                 if (appshell->geo.max_width) {
                     flags |= GDK_HINT_MAX_SIZE;
                 }
+#endif
             }
             gtk_window_set_geometry_hints (GTK_WINDOW(appshell->shell), NULL, &appshell->geo, GDK_HINT_MIN_SIZE | flags);
 #ifdef HAVE_FULLSCREEN
