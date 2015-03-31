@@ -1253,6 +1253,10 @@ void ui_dispatch_events(void)
 #endif	/* USE_UI_THREADS */
 {
     while (gtk_events_pending()) {
+#ifdef HAVE_GLES2
+        if(canvas_init)
+            usleep(1000); // NOTE: Fixes lubuntu 14.04 on odroid with new gtk 3.10
+#endif
         ui_dispatch_next_event();
     }
 }
@@ -1330,6 +1334,30 @@ int x11ui_fullscreen(int enable)
         XCloseDisplay(XDisplay);
 
         glViewport(0, 0, canvas->disp_w, canvas->disp_h);
+
+        float val;
+        int keep_aspect_ratio = 0;
+
+        resources_get_int("KeepAspectRatio", &keep_aspect_ratio);
+
+        // support 16:9 and 16:10 for aspect ratio ( HDMI XU3 has only 16:9 but displayport supports more -> not tested )		
+		if(keep_aspect_ratio)
+        {
+            if((canvas->disp_w * 9) == (canvas->disp_h * 16))
+                val = 1/(1.0f / 9 * 4 * 3);
+            else if((canvas->disp_w * 10) == (canvas->disp_h * 16))
+                val = 1/(1.0f / 10 * 4 * 3);
+            else
+                val = 1.00f;
+		}
+        else
+            val = 1.00f;
+
+        vertices[0][0] =  val/-1;
+        vertices[1][0] =  val;
+        vertices[2][0] =  val/-1;
+        vertices[3][0] =  val;
+
         // TODO: x128 emulation starts with two windows, however EGL does init two times on start,
         //       maybe it's to early to get the pointer to the new created window, this solves it for now
         if (win != (NativeWindowType)x11ui_get_X11_window())
