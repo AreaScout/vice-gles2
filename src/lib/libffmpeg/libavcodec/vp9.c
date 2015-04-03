@@ -1935,9 +1935,9 @@ static void decode_mode(AVCodecContext *ctx)
     case 1:  var = val;                                    break; \
     case 2:  AV_WN16A(&var, val *             0x0101);     break; \
     case 4:  AV_WN32A(&var, val *         0x01010101);     break; \
-    case 8:  AV_WN64A(&var, val * 0x0101010101010101ULL);  break; \
+    case 8:  AV_WN64A(&var, val * ULLN(0x0101010101010101));  break; \
     case 16: { \
-        uint64_t v64 = val * 0x0101010101010101ULL; \
+        uint64_t v64 = val * ULLN(0x0101010101010101); \
         AV_WN64A(              &var,     v64); \
         AV_WN64A(&((uint8_t *) &var)[8], v64); \
         break; \
@@ -2250,7 +2250,7 @@ static void decode_coeffs(AVCodecContext *ctx)
         if (cond) { \
             if (HAVE_FAST_64BIT) { \
                 for (n = 0; n < end; n += step) \
-                    AV_WN64A(&la[n], la[n] * 0x0101010101010101ULL); \
+                    AV_WN64A(&la[n], la[n] * ULLN(0x0101010101010101)); \
             } else { \
                 for (n = 0; n < end; n += step) { \
                     uint32_t v32 = la[n] * 0x01010101; \
@@ -2533,8 +2533,16 @@ static void intra_recon(AVCodecContext *ctx, ptrdiff_t y_off, ptrdiff_t uv_off)
     int tx = 4 * s->lossless + b->tx, uvtx = b->uvtx + 4 * s->lossless;
     int uvstep1d = 1 << b->uvtx, p;
     uint8_t *dst = s->dst[0], *dst_r = s->frames[CUR_FRAME].tf.f->data[0] + y_off;
-    LOCAL_ALIGNED_32(uint8_t, a_buf, [64]);
+
+#if !defined(IDE_COMPILE) || (defined(IDE_COMPILE) && (_MSC_VER >= 1400))
+	LOCAL_ALIGNED_32(uint8_t, a_buf, [64]);
     LOCAL_ALIGNED_32(uint8_t, l, [32]);
+#else
+	uint8_t la_a_buf[sizeof(uint8_t [64] ) + (32)];
+	uint8_t (*a_buf) = (void *)((((uintptr_t)la_a_buf)+(32)-1)&~((32)-1));
+    uint8_t la_l[sizeof(uint8_t [32] ) + (32)];
+	uint8_t (*l) = (void *)((((uintptr_t)la_l)+(32)-1)&~((32)-1));
+#endif
 
     for (n = 0, y = 0; y < end_y; y += step1d) {
         uint8_t *ptr = dst, *ptr_r = dst_r;

@@ -126,9 +126,16 @@ static NOINLINE void x264_mb_mc_01xywh( x264_t *h, int x, int y, int width, int 
     int mvy1   = x264_clip3( h->mb.cache.mv[1][i8][1], h->mb.mv_min[1], h->mb.mv_max[1] ) + 4*4*y;
     int i_mode = x264_size2pixel[height][width];
     intptr_t i_stride0 = 16, i_stride1 = 16;
-    ALIGNED_ARRAY_N( pixel, tmp0,[16*16] );
+
+#if !defined(IDE_COMPILE) || (defined(IDE_COMPILE) && (_MSC_VER >= 1400))
+	ALIGNED_ARRAY_N( pixel, tmp0,[16*16] );
     ALIGNED_ARRAY_N( pixel, tmp1,[16*16] );
-    pixel *src0, *src1;
+#else
+	__declspec(align(32))pixel tmp0 [16*16];
+    __declspec(align(32))pixel tmp1 [16*16];
+#endif
+
+	pixel *src0, *src1;
 
     MC_LUMA_BI( 0 );
 
@@ -1439,7 +1446,12 @@ static void x264_macroblock_deblock_strength_mbaff( x264_t *h, uint8_t (*bs)[8][
             {   { 0, 1, 2, 3, 0, 1, 2, 3 },
                 { 0, 1, 2, 3, 0, 1, 2, 3 }, }
         };
-        ALIGNED_ARRAY_8( uint8_t, tmpbs, [8] );
+
+#if !defined(IDE_COMPILE) || (defined(IDE_COMPILE) && (_MSC_VER >= 1400))
+		ALIGNED_ARRAY_8( uint8_t, tmpbs, [8] );
+#else
+		__declspec(align(8))uint8_t tmpbs [8];
+#endif
 
         const uint8_t *off = offset[MB_INTERLACED][h->mb.i_mb_y&1];
         uint8_t (*nnz)[48] = h->mb.non_zero_count;
@@ -1811,9 +1823,9 @@ void x264_macroblock_cache_save( x264_t *h )
                                      h->mb.cache.intra4x4_pred_mode[x264_scan8[13] ], 0);
     }
     else if( !h->param.b_constrained_intra || IS_INTRA(i_mb_type) )
-        M64( i4x4 ) = I_PRED_4x4_DC * 0x0101010101010101ULL;
+        M64( i4x4 ) = I_PRED_4x4_DC * ULLN(0x0101010101010101);
     else
-        M64( i4x4 ) = (uint8_t)(-1) * 0x0101010101010101ULL;
+        M64( i4x4 ) = (uint8_t)(-1) * ULLN(0x0101010101010101);
 
 
     if( i_mb_type == I_PCM )
