@@ -131,6 +131,10 @@ static ui_menu_entry_t renderer_submenu[] = {
     { N_("Scale2x"), UI_MENU_TYPE_TICK, (ui_callback_t)radio_CrtcFilter,
       (ui_callback_data_t)VIDEO_FILTER_SCALE2X, NULL },
 #endif
+#ifdef HAVE_GLES2
+    { N_("GLSL CRT emulation"), UI_MENU_TYPE_TICK, (ui_callback_t)radio_CrtcFilter,
+      (ui_callback_data_t)VIDEO_FILTER_GLSL_CRT, NULL },
+#endif
     { NULL }
 };
 
