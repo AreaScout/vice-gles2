@@ -33,6 +33,10 @@
 #define VIDEO_FILTER_NONE         0
 #define VIDEO_FILTER_CRT          1
 #define VIDEO_FILTER_SCALE2X      2
+#ifdef HAVE_GLES2
+#define VIDEO_FILTER_GLSL_CRT     3
+#define VIDEO_FILTER_GLSL_RGB_CRT 4
+#endif
 
 /* These constants are used to configure the video output.  */
 

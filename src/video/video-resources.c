@@ -223,6 +223,10 @@ static int set_chip_rendermode(int val, void *param)
         case VIDEO_FILTER_NONE:
         case VIDEO_FILTER_CRT:
         case VIDEO_FILTER_SCALE2X:
+#ifdef HAVE_GLES2
+        case VIDEO_FILTER_GLSL_CRT:
+        case VIDEO_FILTER_GLSL_RGB_CRT:
+#endif
             break;
         default:
             return -1;
