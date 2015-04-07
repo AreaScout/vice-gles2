@@ -153,6 +153,7 @@ static GdkGC *app_gc = NULL;
 #ifdef HAVE_GLES2
 #define SHADER_LEN 1693
 #define SHADER_OFFSET 1389
+#define SHADER_SUB_LEN 42
 EGLDisplay m_display = NULL;
 EGLSurface m_surface = NULL;
 EGLContext m_context = NULL;
@@ -1177,7 +1178,7 @@ int ui_egl_open_display(video_canvas_t *c)
     char *tmpShader = (char*)malloc(SHADER_LEN);
     memset(tmpShader, 0, SHADER_LEN);
     memcpy(tmpShader, CRT_fragment_shader_source, SHADER_OFFSET);
-    memcpy(tmpShader+SHADER_OFFSET, "   gl_FragColor = vec4(out_color, 1.0);\n}\n", 43);
+    memcpy(tmpShader+SHADER_OFFSET, "   gl_FragColor = vec4(out_color, 1.0);\n}\n", SHADER_SUB_LEN);
 
     CRT_program = ui_compile_glsl_shader(CRT_vertex_shader_source, tmpShader);
 
