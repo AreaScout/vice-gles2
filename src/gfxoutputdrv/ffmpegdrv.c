@@ -162,6 +162,7 @@ static int set_container_format(const char *val, void *param)
     int i;
 
     format_index = -1;
+
     for (i = 0; ffmpegdrv_formatlist[i].name != NULL; i++) {
         if (strcmp(val, ffmpegdrv_formatlist[i].name) == 0) {
             format_index = i;
@@ -470,9 +471,11 @@ static int ffmpegmovie_init_audio(int speed, int channels, soundmovie_buffer_t *
     VICE_P_AV_OPT_SET_SAMPLE_FMT(swr_ctx, "out_sample_fmt", c->sample_fmt, 0);
 #else
     VICE_P_AV_OPT_SET_INT(avr_ctx, "in_channel_count", c->channels, 0);
+    VICE_P_AV_OPT_SET_INT(avr_ctx, "in_channel_layout", c->channel_layout, 0);
     VICE_P_AV_OPT_SET_INT(avr_ctx, "in_sample_rate", speed, 0);
     VICE_P_AV_OPT_SET_INT(avr_ctx, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
     VICE_P_AV_OPT_SET_INT(avr_ctx, "out_channel_count", c->channels, 0);
+    VICE_P_AV_OPT_SET_INT(avr_ctx, "out_channel_layout", c->channel_layout, 0);
     VICE_P_AV_OPT_SET_INT(avr_ctx, "out_sample_rate", c->sample_rate, 0);
     VICE_P_AV_OPT_SET_INT(avr_ctx, "out_sample_fmt", c->sample_fmt, 0);
 #endif
@@ -480,10 +483,12 @@ static int ffmpegmovie_init_audio(int speed, int channels, soundmovie_buffer_t *
     /* initialize the resampling context */
 #ifndef HAVE_FFMPEG_AVRESAMPLE
     if (VICE_P_SWR_INIT(swr_ctx) < 0) {
+#else
+    if (VICE_P_AVRESAMPLE_OPEN(avr_ctx) < 0) {
+#endif
         log_debug("ffmpegdrv: Failed to initialize the resampling context");
         return -1;
     }
-#endif
 
     if (video_init_done) {
         ffmpegdrv_init_file();
@@ -536,7 +541,7 @@ static int ffmpegmovie_encode_audio(soundmovie_buffer_t *audio_in)
 #ifndef HAVE_FFMPEG_AVRESAMPLE
             ret = VICE_P_SWR_CONVERT(swr_ctx, audio_st.frame->data, dst_nb_samples, (const uint8_t **)frame->data, frame->nb_samples);
 #else
-            ret = VICE_P_AVRESAMPLE_CONVERT(avr_ctx, audio_st.frame->data, dst_nb_samples, (const uint8_t **)frame->data, frame->nb_samples);
+            ret = VICE_P_AVRESAMPLE_CONVERT(avr_ctx, audio_st.frame->data, 0, dst_nb_samples, (const uint8_t **)frame->data, 0, frame->nb_samples);
 #endif
             if (ret < 0) {
                 log_debug("ffmpegdrv_encode_audio: Error while converting audio frame");
@@ -1022,7 +1027,7 @@ static gfxoutputdrv_t ffmpeg_drv = {
 
 static void ffmpeg_get_formats_and_codecs(void)
 {
-    int i, j, ai, vi, f;
+    int i, j, ai, vi = 0, f;
     gfxoutputdrv_codec_t *audio_codec_list;
     gfxoutputdrv_codec_t *video_codec_list;
     gfxoutputdrv_codec_t *ac, *vc;
@@ -1030,44 +1035,35 @@ static void ffmpeg_get_formats_and_codecs(void)
     f = 0;
     ffmpegdrv_formatlist = lib_malloc(sizeof(gfxoutputdrv_format_t));
 
-    for (i = 0; formats_to_test[i].name != NULL; i++)
-    {
-        if (VICE_P_AV_GUESS_FORMAT(formats_to_test[i].name, NULL, NULL))
-        {
+    for (i = 0; formats_to_test[i].name != NULL; i++) {
+        if (VICE_P_AV_GUESS_FORMAT(formats_to_test[i].name, NULL, NULL)) {
             audio_codec_list = NULL;
             video_codec_list = NULL;
-            if (formats_to_test[i].audio_codecs != NULL)
-            {
+            if (formats_to_test[i].audio_codecs != NULL) {
                 ai = 0;
                 audio_codec_list = lib_malloc(sizeof(gfxoutputdrv_codec_t));
                 ac = formats_to_test[i].audio_codecs;
-                for (j = 0; ac[j].name != NULL; j++)
-                {
-                    if (ac[j].id == AV_CODEC_ID_NONE || VICE_P_AVCODEC_FIND_ENCODER(ac[j].id))
-                    {
+                for (j = 0; ac[j].name != NULL; j++) {
+                    if ((ac[j].id == AV_CODEC_ID_NONE) || VICE_P_AVCODEC_FIND_ENCODER(ac[j].id)) {
                         audio_codec_list[ai++] = ac[j];
                         audio_codec_list = lib_realloc(audio_codec_list, (ai + 1) * sizeof(gfxoutputdrv_codec_t));
                     }
                 }
                 audio_codec_list[ai].name = NULL;
             }
-            if (formats_to_test[i].video_codecs != NULL)
-            {
+            if (formats_to_test[i].video_codecs != NULL) {
                 vi = 0;
                 video_codec_list = lib_malloc(sizeof(gfxoutputdrv_codec_t));
                 vc = formats_to_test[i].video_codecs;
-                for (j = 0; vc[j].name != NULL; j++)
-                {
-                    if (vc[j].id == AV_CODEC_ID_NONE || VICE_P_AVCODEC_FIND_ENCODER(vc[j].id))
-                    {
+                for (j = 0; vc[j].name != NULL; j++) {
+                    if (vc[j].id == AV_CODEC_ID_NONE || VICE_P_AVCODEC_FIND_ENCODER(vc[j].id)) {
                         video_codec_list[vi++] = formats_to_test[i].video_codecs[j];
                         video_codec_list = lib_realloc(video_codec_list, (vi + 1) * sizeof(gfxoutputdrv_codec_t));
                     }
                 }
                 video_codec_list[vi].name = NULL;
             }
-            if ((audio_codec_list == NULL || ai > 0) && (video_codec_list == NULL || vi > 0))
-            {
+            if (((audio_codec_list == NULL) || (ai > 0)) && ((video_codec_list == NULL) || (vi > 0))) {
                 ffmpegdrv_formatlist[f].name = lib_stralloc(formats_to_test[i].name);
                 ffmpegdrv_formatlist[f].audio_codecs = audio_codec_list;
                 ffmpegdrv_formatlist[f++].video_codecs = video_codec_list;
@@ -1081,17 +1077,17 @@ static void ffmpeg_get_formats_and_codecs(void)
 
 void gfxoutput_init_ffmpeg(int help)
 {
+#ifndef STATIC_FFMPEG
     if (help) {
         gfxoutput_register(&ffmpeg_drv);
         return;
     }
-    if (!help) {
-        if (ffmpeglib_open(&ffmpeglib) < 0) {
-            return;
-        }
-        VICE_P_AV_REGISTER_ALL();
-        ffmpeg_get_formats_and_codecs();
-        gfxoutput_register(&ffmpeg_drv);
+#endif
+    if (ffmpeglib_open(&ffmpeglib) < 0) {
+        return;
     }
+    VICE_P_AV_REGISTER_ALL();
+    ffmpeg_get_formats_and_codecs();
+    gfxoutput_register(&ffmpeg_drv);
 }
 #endif

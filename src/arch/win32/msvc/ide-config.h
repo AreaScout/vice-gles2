@@ -84,12 +84,14 @@
 #define HAVE_DINPUT             1
 #define USE_DXSOUND             1
 #define HAVE_DSOUND_LIB         1
-#ifndef _M_IA64
+
+#if !defined(_M_IA64) && !defined(_M_ARM)
 #define HAVE_GUIDLIB            1
 #endif
+
 #endif
 
-#if !defined(_M_AMD64) && !defined(_M_IA64)
+#if !defined(_M_AMD64) && !defined(_M_IA64) && !defined(_M_ARM)
 #define __i386__                1
 #endif
 

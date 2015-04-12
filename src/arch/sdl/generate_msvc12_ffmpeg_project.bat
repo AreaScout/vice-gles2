@@ -15,9 +15,13 @@ copy msvc-files\ide-siddtvdefs.h win32-msvc12-ffmpeg
 copy msvc-files\inttypes.h win32-msvc12-ffmpeg
 copy msvc-files\stdint.h win32-msvc12-ffmpeg
 copy msvc-files\vice.manifest win32-msvc12-ffmpeg
-copy msvc-files\winid_ia64.bat win32-msvc12-ffmpeg
+copy msvc-files\winid_arm.bat win32-msvc12-ffmpeg
 copy msvc-files\winid_x64.bat win32-msvc12-ffmpeg
 copy msvc-files\winid_x86.bat win32-msvc12-ffmpeg
+copy msvc-files\ffmpeg-config.h win32-msvc12-ffmpeg
+copy msvc-files\lame-config.h win32-msvc12-ffmpeg
+copy msvc-files\x264_config.h win32-msvc12-ffmpeg
+copy msvc-files\x264-config.h win32-msvc12-ffmpeg
 echo MSVC12 project files generated in win32-msvc12-ffmpeg
 goto end
 :missingmkmsvc
