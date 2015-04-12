@@ -1105,11 +1105,8 @@ int ui_egl_open_display(video_canvas_t *c)
     };
 
     if (m_display)
-    {
         if (ui_egl_close_display() != EGL_TRUE)
             return -1;
-        m_display = m_surface = m_context = NULL;
-    }
 
     m_display = eglGetDisplay((EGLNativeDisplayType) x11ui_get_display_ptr());
 
@@ -1158,7 +1155,8 @@ int ui_egl_open_display(video_canvas_t *c)
     result = eglMakeCurrent(m_display, m_surface, m_surface, m_context);
 
     Display *XDisplay = XOpenDisplay(NULL);
-    if (!XDisplay) {
+    if (!XDisplay)
+    {
         log_error(ui_log, "EGL: Error: failed to open X display.\n");
         return -1;
     }
