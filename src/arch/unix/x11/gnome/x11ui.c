@@ -151,8 +151,6 @@ static GdkGC *app_gc = NULL;
 #endif
 
 #ifdef HAVE_GLES2
-#define SHADER_LEN 1693
-#define SHADER_OFFSET 1389
 #define SHADER_SUB_LEN 42
 EGLDisplay m_display = NULL;
 EGLSurface m_surface = NULL;
@@ -1096,7 +1094,7 @@ GDK_SUBSTRUCTURE_MASK          Receive  GDK_STRUCTURE_MASK events for child wind
 #ifdef HAVE_GLES2
 int ui_egl_open_display(video_canvas_t *c)
 {
-    GLuint texture;
+    GLuint texture, offset;
     // config OpenGL ES2.0
     static const EGLint context_attributes[] =
     {
@@ -1169,14 +1167,23 @@ int ui_egl_open_display(video_canvas_t *c)
 
     glViewport(0, 0, c->disp_w, c->disp_h);
 
+    for(offset = 0;offset < strlen(CRT_fragment_shader_source); offset++)
+    {
+        if(CRT_fragment_shader_source[offset] == 'd' && CRT_fragment_shader_source[offset+1] == ')' && CRT_fragment_shader_source[offset+2] == ';')
+        {
+            offset+=3;
+            break;
+        }
+    }
+
     NO_CRT_program = ui_compile_glsl_shader(vertex_shader_source, fragment_shader_source);
 
     CRT_RGB_program = ui_compile_glsl_shader(CRT_vertex_shader_source, CRT_fragment_shader_source);
 
-    char *tmpShader = (char*)malloc(SHADER_LEN);
-    memset(tmpShader, 0, SHADER_LEN);
-    memcpy(tmpShader, CRT_fragment_shader_source, SHADER_OFFSET);
-    memcpy(tmpShader+SHADER_OFFSET, "   gl_FragColor = vec4(out_color, 1.0);\n}\n", SHADER_SUB_LEN);
+    char *tmpShader = (char*)malloc(strlen(CRT_fragment_shader_source));
+    memset(tmpShader, 0, strlen(CRT_fragment_shader_source));
+    memcpy(tmpShader, CRT_fragment_shader_source, offset);
+    memcpy(tmpShader+offset, "   gl_FragColor = vec4(out_color, 1.0);\n}\n", SHADER_SUB_LEN);
 
     CRT_program = ui_compile_glsl_shader(CRT_vertex_shader_source, tmpShader);
 
