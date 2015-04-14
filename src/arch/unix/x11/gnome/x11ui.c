@@ -2414,23 +2414,23 @@ void gles2_render_canvas(struct s_mbufs *buffer, video_canvas_t *canvas)
         break;
     }
 
-	glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buffer->w, buffer->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer->buffer);
-	glUniform2f(glGetUniformLocation(program, "in_textureSize"), (float)buffer->w, (float)buffer->h);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buffer->w, buffer->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer->buffer);
+    glUniform2f(glGetUniformLocation(program, "in_textureSize"), (float)buffer->w, (float)buffer->h);
 
-	GLint texture_loc = glGetUniformLocation(program, "in_texture");
-	glUniform1i(texture_loc, 0); // 0 -> GL_TEXTURE0 in glActiveTexture
+    GLint texture_loc = glGetUniformLocation(program, "in_texture");
+    glUniform1i(texture_loc, 0); // 0 -> GL_TEXTURE0 in glActiveTexture
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-	glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
+    glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, coords);
-	glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, coords);
+    glEnableVertexAttribArray(1);
 
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	eglSwapBuffers(m_display, m_surface);
+    eglSwapBuffers(m_display, m_surface);
 }
 #endif
 
