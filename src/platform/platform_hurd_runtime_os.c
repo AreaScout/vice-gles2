@@ -1,9 +1,8 @@
 /*
- * kbd.m - MacVICE keyboard driver
+ * platform_hurd_runtime_os.c - GNU Hurd runtime version discovery.
  *
  * Written by
- *  Christian Vogelgsang <chris@vogelgsang.org>
- *  Michael Klein <michael.klein@puffin.lb.shuttle.de>
+ *  Marco van den Heuvel <blackystardust68@yahoo.com>
  *
  * This file is part of VICE, the Versatile Commodore Emulator.
  * See README for copyright notice.
@@ -25,35 +24,34 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+/* Tested and confirmed working on:
+ *
+ * - Debian Hurd 2015
+ *
+ */
 
 #include "vice.h"
-#include "kbd.h"
-#include "keyboard.h"
 
-void kbd_arch_init(void)
-{
-}
+#if defined(__GNU__) && !defined(NEXTSTEP_COMPILE) && !defined(OPENSTEP_COMPILE)
 
-signed long kbd_arch_keyname_to_keynum(char *keyname)
-{
-    return (signed long)atoi(keyname);
-}
+#include <sys/utsname.h>
+#include <string.h>
+#include <gnu/libc-version.h>
 
-const char *kbd_arch_keynum_to_keyname(signed long keynum)
-{
-    static char keyname[20];
-    sprintf(keyname, "%li", keynum);
-    return keyname;
-}
+static char os[200];
+static int got_os = 0;
 
-void kbd_initialize_numpad_joykeys(int* joykeys)
+char *platform_get_hurd_runtime_os(void)
 {
-}
+    struct utsname name;
 
-int kbd_arch_get_host_mapping(void)
-{
-    /* FIXME: determine layout */
-    return KBD_MAPPING_US;
+    if (!got_os) {
+        uname(&name);
+
+        sprintf(os, "GNU Hurd %s (glibc %s)", name.version, gnu_get_libc_version());
+
+        got_os = 1;
+    }
+    return os;
 }
+#endif
