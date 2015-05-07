@@ -386,7 +386,8 @@ static int amf_parse_object(AVFormatContext *s, AVStream *astream,
                             AVStream *vstream, const char *key,
                             int64_t max_pos, int depth)
 {
-    AVCodecContext *acodec, *vcodec;
+    AVCodecContext *acodec = NULL;
+    AVCodecContext *vcodec = NULL;
     FLVContext *flv = s->priv_data;
     AVIOContext *ioc;
     AMFDataType amf_type;
@@ -658,6 +659,8 @@ static void clear_index_entries(AVFormatContext *s, int64_t pos)
     }
 }
 
+/* Unused ?? */
+#if 0
 static int amf_skip_tag(AVIOContext *pb, AMFDataType type)
 {
     int nb = -1, ret, parse_name = 1;
@@ -762,6 +765,7 @@ skip:
 
     return ret;
 }
+#endif
 
 static int flv_read_packet(AVFormatContext *s, AVPacket *pkt)
 {

@@ -389,7 +389,7 @@ static inline void dv_guess_qnos(EncBlockInfo *blks, int *qnos)
                                 prev            = k;
                             } else {
                                 if (b->next[k] >= mb_area_start[a + 1] && b->next[k] < 64) {
-                                    for (a2 = a + 1; b->next[k] >= mb_area_start[a2 + 1]; a2++)
+                                    for (a2 = a + 1; ((a2 + 1) < 5) && (b->next[k] >= mb_area_start[a2 + 1]); a2++)
                                         b->prev[a2] = prev;
                                     av_assert2(a2 < 4);
                                     av_assert2(b->mb[b->next[k]]);
@@ -741,7 +741,7 @@ static int dvvideo_encode_frame(AVCodecContext *c, AVPacket *pkt,
         return ret;
 
     c->pix_fmt                = s->sys->pix_fmt;
-    s->frame                  = frame;
+    s->frame                  = (AVFrame *)frame;
     c->coded_frame->key_frame = 1;
     c->coded_frame->pict_type = AV_PICTURE_TYPE_I;
 
