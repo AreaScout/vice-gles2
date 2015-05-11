@@ -27,6 +27,17 @@
 /* Tested and confirmed working on:
    cpu      | netbsd version
    -------------------------
+   i386     | 5.0
+   i386     | 5.0.1
+   i386     | 5.0.2
+   i386     | 5.1
+   i386     | 5.1.1
+   i386     | 5.1.2
+   i386     | 5.1.3
+   i386     | 5.1.4
+   i386     | 5.1.5
+   i386     | 5.2
+   i386     | 5.2.1
    i386     | 5.2.2
    i386     | 5.2.3
    i386     | 6.0
@@ -57,6 +68,7 @@
 
 #include <stdio.h>
 #include <sys/utsname.h>
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <string.h>
 #include <ctype.h>
