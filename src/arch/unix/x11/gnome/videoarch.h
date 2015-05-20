@@ -38,6 +38,10 @@
 #ifdef HAVE_HWSCALE
 #include <GL/gl.h>
 #endif
+#ifdef HAVE_GLES2
+#include <GLES2/gl2.h>
+#endif
+
 
 typedef void (*video_refresh_func_t)(struct video_canvas_s *, int, int, int, int, unsigned int, unsigned int);
 
@@ -64,9 +68,11 @@ struct video_canvas_s {
     struct fullscreenconfig_s *fullscreenconfig;
     video_refresh_func_t video_fullscreen_refresh_func;
 #endif
-#ifdef HAVE_HWSCALE
+#if defined(HAVE_HWSCALE) || defined(HAVE_GLES2)
     unsigned char *hwscale_image;
     GLuint screen_texture;
+    int disp_w;
+    int disp_h;
 #endif
     int offx; /* for lightpen */
     int app_shell; /* app shell that belongs to this canvas */

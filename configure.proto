@@ -32,6 +32,7 @@ VICE_ARG_ENABLE_LIST(textfield,   [  --disable-textfield     disable enhanced te
 VICE_ARG_ENABLE_LIST(fullscreen,  [  --disable-fullscreen    disable XFree86 fullscreen detection])
 VICE_ARG_ENABLE_LIST(gnomeui,     [  --enable-gnomeui        enables GNOME UI with GTK2 support])
 VICE_ARG_ENABLE_LIST(gnomeui3,    [  --enable-gnomeui3       enables GNOME UI with GTK3 support])
+VICE_ARG_ENABLE_LIST(gles2,       [  --enable-gles2          enables GLES2 video driver instead of OpenGL])
 VICE_ARG_ENABLE_LIST(sdlui,       [  --enable-sdlui          enables SDL UI support])
 VICE_ARG_ENABLE_LIST(sdlui2,      [  --enable-sdlui2         enables SDL2 UI support])
 VICE_ARG_ENABLE_LIST(dingoo,      [  --enable-dingoo         enables native Dingoo support])
@@ -2950,6 +2951,14 @@ if test x"$is_unix_x11" = "xyes" -a x"$enable_sdlui" != "xyes" -a x"$enable_sdlu
       fi
     fi
 
+    AC_CHECK_HEADER(GLES2/gl2.h,[ AC_DEFINE(HAVE_GLES2,,[Enable GLES2 video driver window scaling]) ],,[#include <GLES2/gl2.h>])
+    if test x"$ac_cv_header_GLES2_gl2_h" = "xno" -a x"$enable_gles2" = "xyes"; then
+      AC_MSG_ERROR([GLES2/gl2.h headers missing])
+    else
+      GLES2_LIBS="-lGLESv2 -lEGL"
+	  AC_DEFINE(HAVE_GLES2,,[Enable GLES2 video driver window scaling])
+    fi
+
     if test x"$have_vte" = "xyes"; then
       AC_DEFINE(HAVE_VTE,,[Enable VTE support])
     fi
@@ -2970,8 +2979,8 @@ if test x"$is_unix_x11" = "xyes" -a x"$enable_sdlui" != "xyes" -a x"$enable_sdlu
           AC_MSG_RESULT(no)
         )
     fi
-    X_LIBS="$GTK_LIBS $GTKGL_LIBS $X_LIBS $VTE_LIBS"
-    LINK_X_LIBS="$GTK_LIBS $GTKGL_LIBS $LINK_X_LIBS $VTE_LIBS"
+    X_LIBS="$GTK_LIBS $GTKGL_LIBS $X_LIBS $VTE_LIBS $GLES2_LIBS"
+    LINK_X_LIBS="$GTK_LIBS $GTKGL_LIBS $LINK_X_LIBS $VTE_LIBS $GLES2_LIBS"
     if test x"$ac_cv_lib_readline_readline" = "xyes" -a x"READLINE_HEADER_PRESENT" = "xyes"; then
       AC_DEFINE(HAVE_READLINE,,[Enable the readline library])
     fi

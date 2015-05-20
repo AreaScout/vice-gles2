@@ -76,6 +76,12 @@ static ui_menu_entry_t renderer_submenu[] = {
     { N_("Scale2x"), UI_MENU_TYPE_TICK, (ui_callback_t)radio_VDCFilter,
       (ui_callback_data_t)VIDEO_FILTER_SCALE2X, NULL },
 #endif
+#ifdef HAVE_GLES2
+    { N_("GLSL CRT emulation"), UI_MENU_TYPE_TICK, (ui_callback_t)radio_VDCFilter,
+      (ui_callback_data_t)VIDEO_FILTER_GLSL_CRT, NULL },
+    { N_("GLSL RGB CRT emulation"), UI_MENU_TYPE_TICK, (ui_callback_t)radio_VDCFilter,
+      (ui_callback_data_t)VIDEO_FILTER_GLSL_RGB_CRT, NULL },
+#endif
     { NULL }
 };
 
@@ -108,6 +114,10 @@ UI_MENU_DEFINE_TOGGLE(UseXSync)
 #endif
 
 UI_MENU_DEFINE_TOGGLE(VDC64KB)
+
+#ifdef HAVE_GLES2
+UI_MENU_DEFINE_TOGGLE(KeepAspectRatio)
+#endif
 
 #ifdef HAVE_HWSCALE
 static int get_aspect_enabled(int m)
@@ -205,6 +215,10 @@ ui_menu_entry_t vdc_submenu[] = {
 #endif
 #ifdef HAVE_FULLSCREEN
     { "--", UI_MENU_TYPE_SEPARATOR },
+#ifdef HAVE_GLES2
+    { N_("Keep aspect ratio"), UI_MENU_TYPE_TICK,
+      (ui_callback_t)toggle_KeepAspectRatio, NULL, NULL },
+#endif
     { N_("Fullscreen settings"), UI_MENU_TYPE_NORMAL, NULL, NULL, fullscreen_menuVDC },
 #endif
 #ifndef USE_GNOMEUI

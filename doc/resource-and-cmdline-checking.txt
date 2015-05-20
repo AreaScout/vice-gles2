@@ -8056,7 +8056,7 @@ crtc/crtc-resources.c:
 ----------------------
 resource type:                  int
 resource name:                  "CrtcFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..3 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   crtc.raster->canvas->videoconfig->filter
@@ -8070,7 +8070,7 @@ platform range correct:		amigaos/beos/dos/os2/sdl/unix/osx/windows
 crtc/crtc-cmdline-options.c:
 ----------------------------
 command line:   -CRTCfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation)"
 resource:       "CrtcFilter"
 action:         N/A
 
@@ -10581,7 +10581,7 @@ plus4/ted-resources.c:
 ----------------------
 resource type:                  int
 resource name:                  "TEDFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..4 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3), VIDEO_FILTER_GLSL_RGB_CRT (4))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   ted.raster->canvas->videoconfig->filter
@@ -10595,7 +10595,7 @@ platform range correct:		amigaos/beos/dos/os2/sdl/unix/osx/windows
 plus4/ted-cmdline-options.c:
 ----------------------------
 command line:   -TEDfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation, 4: GLSL RGB CRT emulation)"
 resource:       "TEDFilter"
 action:         N/A
 
@@ -11942,7 +11942,7 @@ vic20/vic-resources.c:
 ----------------------
 resource type:                  int
 resource name:                  "VICFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..4 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3), VIDEO_FILTER_GLSL_RGB_CRT (4))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   vic.raster->canvas->videoconfig->filter
@@ -11956,7 +11956,7 @@ platform range correct:		amigaos/beos/dos/os2/sdl/unix/osx/windows
 vic20/vic-cmdline-options.c:
 ----------------------------
 command line:   -VICfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation, 4: GLSL RGB CRT emulation)"
 resource:       "VICFilter"
 action:         N/A
 
@@ -12813,7 +12813,7 @@ vicii/vicii-resources.c:
 ------------------------
 resource type:                  int
 resource name:                  "VICIIFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..4 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3), VIDEO_FILTER_GLSL_RGB_CRT (4))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   vicii.raster->canvas->videoconfig->filter
@@ -12827,7 +12827,7 @@ platform range correct:		amigaos/beos/dos/os2/sdl/unix/osx/windows
 vicii/vicii-cmdline-options.c:
 ------------------------------
 command line:   -VICIIfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation, 4: GLSL RGB CRT emulation)"
 resource:       "VICIIFilter"
 action:         N/A
 
@@ -12835,7 +12835,7 @@ viciisc/vicii-resources.c:
 --------------------------
 resource type:                  int
 resource name:                  "VICIIFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..4 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3), VIDEO_FILTER_GLSL_RGB_CRT (4))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   vicii.raster->canvas->videoconfig->filter
@@ -12849,7 +12849,7 @@ platform range correct:		amigaos/beos/dos/os2/sdl/unix/osx/windows
 viciisc/vicii-cmdline-options.c:
 --------------------------------
 command line:   -VICIIfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation, 4: GLSL RGB CRT emulation )"
 resource:       "VICIIFilter"
 action:         N/A
 
@@ -17357,7 +17357,7 @@ platform gui missing:			os2/osx
 plus4/ted-cmdline-options.c:
 ----------------------------
 command line:   -TEDborders <Mode>
-description:    "Set border display mode (0: normal, 1: full, 2: debug)"
+description:    "Set border display mode (0: normal, 1: full, 2: debug, 3: none)"
 resource:       N/A
 action:         border_set_func() (sets "TEDBorderMode")
 
@@ -18767,7 +18767,7 @@ vdc/vdc-resources.c:
 --------------------
 resource type:                  int
 resource name:                  "VDCFilter"
-resource range:                 0..2 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2))
+resource range:                 0..4 (VIDEO_FILTER_NONE (0), VIDEO_FILTER_CRT (1), VIDEO_FILTER_SCALE2X (2), VIDEO_FILTER_GLSL_CRT (3), VIDEO_FILTER_GLSL_RGB_CRT (4))
 resource default:               VIDEO_FILTER_CRT (1)
 resource function:              set_chip_rendermode()
 resource var:                   vdc.raster->canvas->videoconfig->filter
@@ -18783,7 +18783,7 @@ platform gui missing:			os2
 vdc/vdc-cmdline-options.c:
 --------------------------
 command line:   -VDCfilter <Mode>
-description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x)"
+description:    "Select rendering filter: (0: none, 1: CRT emulation, 2: scale2x, 3: GLSL CRT emulation, 4: GLSL RGB CRT emulation )"
 resource:       "VDCFilter"
 action:         N/A
 
@@ -18889,7 +18889,7 @@ platform gui missing:			os2/osx
 vic20/vic-cmdline-options.c:
 ----------------------------
 command line:   -VICborders <Mode>
-description:    "Set border display mode (0: normal, 1: full, 2: debug)"
+description:    "Set border display mode (0: normal, 1: full, 2: debug, 3: none)"
 resource:       "VICBorderMode"
 action:         N/A
 
@@ -19110,7 +19110,7 @@ platform gui missing:			os2
 vicii/vicii-cmdline-options.c:
 ------------------------------
 command line:   -VICIIborders <Mode>
-description:    "Set border display mode (0: normal, 1: full, 2: debug)"
+description:    "Set border display mode (0: normal, 1: full, 2: debug, 3: none)"
 resource:       N/A
 action:         border_set_func() (set "VICIIBorderMode")
 
@@ -19134,7 +19134,7 @@ platform gui missing:			os2
 viciisc/vicii-cmdline-options.c:
 --------------------------------
 command line:   -VICIIborders <Mode>
-description:    "Set border display mode (0: normal, 1: full, 2: debug)"
+description:    "Set border display mode (0: normal, 1: full, 2: debug, 3: none)"
 resource:       N/A
 action:         border_set_func() (set "VICIIBorderMode")
 
