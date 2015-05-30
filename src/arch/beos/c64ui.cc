@@ -119,7 +119,6 @@ ui_menu_toggle  c64_ui_menu_toggles[] = {
     { "EasyFlashWriteCRT", MENU_TOGGLE_EASYFLASH_AUTOSAVE },
     { "VICIINewLuminances", MENU_VICII_NEW_LUMINANCES },
     { "IECReset", MENU_IEC_RESET },
-    { "IDE64version4", MENU_TOGGLE_IDE64_V4 },
     { "IDE64RTCSave", MENU_TOGGLE_IDE64_RTC_SAVE },
     { "ExpertCartridgeEnabled", MENU_TOGGLE_EXPERT },
     { "ExpertImageWrite", MENU_TOGGLE_EXPERT_SWC },
@@ -347,6 +346,13 @@ ui_res_possible_values c64_DS12C887RTC_base[] = {
     { -1, 0 }
 };
 
+ui_res_possible_values c64_IDE64version[] = {
+    { 0, MENU_IDE64_VERSION_V3 },
+    { 1, MENU_IDE64_VERSION_V4_1 },
+    { 2, MENU_IDE64_VERSION_V4_2 },
+    { -1, 0 }
+};
+
 /* VICIIModel has to be first for the hack below to work */
 ui_res_value_list c64_ui_res_values[] = {
     { "VICIIModel", viciimodels },
@@ -377,6 +383,7 @@ ui_res_value_list c64_ui_res_values[] = {
     { "RRrevision", RRrevs },
     { "DS12C887RTCbase", c64_DS12C887RTC_base },
     { "MemoryHack", C64MemoryHacks },
+    { "IDE64version", c64_IDE64version },
     { NULL, NULL }
 };
 
@@ -639,6 +646,16 @@ static void c64_ui_specific(void *msg, void *window)
     }
 }
 
+int c64ui_init_early(void)
+{
+    return 0;
+}
+
+int c64scui_init_early(void)
+{
+    return c64ui_init_early();
+}
+
 static int c64ui_common_init(void)
 {
     ui_register_machine_specific(c64_ui_specific);
@@ -662,4 +679,9 @@ int c64scui_init(void)
 
 void c64ui_shutdown(void)
 {
+}
+
+void c64scui_shutdown(void)
+{
+    c64ui_shutdown();
 }

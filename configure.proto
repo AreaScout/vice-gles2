@@ -194,11 +194,6 @@ fi
 
 AC_SUBST(DEBUGBUILD)
 
-dnl check whether to build debug code
-if test x"$enable_debug_code" = "xyes"; then
-  AC_DEFINE(DEBUG,,[Enable debugging code])
-fi
-
 if test x"$enable_gnomeui" = "xyes" ; then
   AC_DEFINE(USE_GNOMEUI,,[Use GNOME UI.])
 fi
@@ -859,6 +854,7 @@ dnl All other UN*X systems
                        warn_no_mfi="-Wno-missing-field-initializers" ],
                      [ AC_MSG_RESULT(no)
                        warn_no_mfi="" ])
+      AC_MSG_CHECKING([if the compiler supports -Wno-unused-parameter])
       CFLAGS="$ORIG_CFLAGS -Wno-unused-parameter"
       AC_TRY_COMPILE([],
                      [int test;],
@@ -866,9 +862,17 @@ dnl All other UN*X systems
                        warn_no_up="-Wno-unused-parameter" ],
                      [ AC_MSG_RESULT(no)
                        warn_no_up="" ])
+      AC_MSG_CHECKING([if the compiler supports -Wno-sign-compare])
+      CFLAGS="$ORIG_CFLAGS -Wno-sign-compare"
+      AC_TRY_COMPILE([],
+                     [int test;],
+                     [ AC_MSG_RESULT(yes)
+                       warn_no_sc="-Wno-sign-compare" ],
+                     [ AC_MSG_RESULT(no)
+                       warn_no_sc="" ])
       CFLAGS=$ORIG_CFLAGS
 
-      warnings_cxx="-Wall -W $warn_no_up $warn_no_mfi -Wno-sign-compare"
+      warnings_cxx="-Wall -W $warn_no_up $warn_no_mfi $warn_no_sc"
       if test x"$enable_gnomeui" != "xyes" ; then
           warnings_c="-Wstrict-prototypes $warnings_cxx"
       else
@@ -2089,6 +2093,14 @@ if test x"$with_sdlsound" = "xyes" -o x"$enable_sdlui" = "xyes" -o x"$enable_sdl
           fi
         fi
 
+        if test x"$sdl_config" = "x"; then
+          sdl_config=no
+        fi
+
+        if test x"$sdl2_config" = "x"; then
+          sdl2_config=no;
+        fi
+
         old_cflags=$CFLAGS
         old_cxxflags=$CXXFLAGS
         old_libs=$LIBS
@@ -2942,7 +2954,8 @@ if test x"$is_unix_x11" = "xyes" -a x"$enable_sdlui" != "xyes" -a x"$enable_sdlu
       PKG_CHECK_MODULES(GTK, [gtk+-3.0])
       AC_DEFINE(HAVE_CAIRO,,[Enable Cairo rendering support])
       if test x"$enable_vte" != "xno"; then
-        PKG_CHECK_MODULES(VTE, [vte-2.90], have_vte=yes, AC_MSG_RESULT(no))
+        PKG_CHECK_MODULES(VTE, [vte-2.91], have_vte=yes,
+           PKG_CHECK_MODULES(VTE, [vte-2.90], have_vte=yes, AC_MSG_RESULT(no)))
       fi
     else
       PKG_CHECK_MODULES(GTK, [gtk+-2.0])

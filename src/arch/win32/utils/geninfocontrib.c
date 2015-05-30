@@ -24,6 +24,8 @@
  *
  */
 
+#define _CRT_SECURE_NO_DEPRECATE
+
 #ifdef _minix_vmd
 #define _MINIX_SOURCE
 #endif
@@ -31,6 +33,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(IDE_COMPILE) && defined(_MSC_VER) && (_MSC_VER >= 1400)
+#define unlink _unlink
+#endif
 
 static char line_buffer[512];
 static char text[65536];

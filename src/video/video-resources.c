@@ -287,7 +287,7 @@ static int set_fullscreen_enabled(int value, void *param)
 
     canvas->videoconfig->fullscreen_enabled = val;
 
-#ifndef USE_SDLUI
+#if !defined(USE_SDLUI) && !defined(USE_SDLUI2)
     if (canvas->initialized)
 #endif
     {

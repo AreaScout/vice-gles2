@@ -120,7 +120,7 @@ void machine_resources_shutdown(void)
 /* C64-specific command-line option initialization.  */
 int machine_cmdline_options_init(void)
 {
-#ifdef USE_SDLUI
+#if defined(USE_SDLUI) || defined(USE_SDLUI2)
     if (vicii_cmdline_options_init() < 0) {
         init_cmdline_options_fail("vicii");
         return -1;
@@ -167,7 +167,7 @@ void machine_setup_context(void)
 /* C64-specific initialization.  */
 int machine_specific_init(void)
 {
-#ifdef USE_SDLUI
+#if defined(USE_SDLUI) || defined(USE_SDLUI2)
     if (console_mode) {
         video_disabled_mode = 1;
     }
@@ -434,6 +434,11 @@ struct image_contents_s *machine_diskcontents_bus_read(unsigned int unit)
 }
 
 BYTE machine_tape_type_default(void)
+{
+    return 0;
+}
+
+BYTE machine_tape_behaviour(void)
 {
     return 0;
 }
