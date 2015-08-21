@@ -12,6 +12,7 @@ libplatform_a_SOURCES = \
 	platform_amd64_msvc_cpuid.h \
 	platform_amigaos3_runtime_os.c \
 	platform_amigaos4_runtime_os.c \
+	platform_amix_runtime_os.c \
 	platform_aros_runtime_os.c \
 	platform_beos_runtime_os.c \
 	platform_compiler.h \
@@ -20,6 +21,8 @@ libplatform_a_SOURCES = \
 	platform_darwin_runtime_os.c \
 	platform_discovery.h \
 	platform_dos_runtime_os.c \
+	platform_dragonfly_runtime_os.c \
+	platform_dragonfly_version.h \
 	platform_freebsd_runtime_os.c \
 	platform_freebsd_version.h \
 	platform_hurd_runtime_os.c \
@@ -32,6 +35,7 @@ libplatform_a_SOURCES = \
 	platform_netbsd_runtime_os.c \
 	platform_netbsd_version.h \
 	platform_nextopenstep_runtime_os.c \
+	platform_openbsd_runtime_os.c \
 	platform_openbsd_version.h \
 	platform_os2_runtime_os.c \
 	platform_qnx6_version.h \
@@ -39,6 +43,7 @@ libplatform_a_SOURCES = \
 	platform_skyos_runtime_os.c \
 	platform_sco_runtime_os.c \
 	platform_solaris_runtime_os.c \
+	platform_solaris_version.h \
 	platform_syllable_runtime_os.c \
 	platform_ultrix_runtime_os.c \
 	platform_windows_runtime_os.c \

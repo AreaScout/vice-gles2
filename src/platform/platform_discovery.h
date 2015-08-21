@@ -169,7 +169,16 @@
 
 /* AmigaOS 3.x discovery */
 #ifdef AMIGA_M68K
-#  define PLATFORM_OS "AmigaOS 3.x"
+#  if defined(__VBCC__) && defined(__PPC__)
+#    include <proto/powerpc.h>
+#    ifdef _VBCCINLINE_POWERPC_H
+#      define PLATFORM_OS "WarpOS (AmigaOS 3.x)"
+#    else
+#      define PLATFORM_OS "PowerUP (AmigaOS 3.x)"
+#    endif
+#  else
+#    define PLATFORM_OS "AmigaOS 3.x"
+#  endif
 #endif
 
 
@@ -230,13 +239,13 @@
 
 /* DragonFly BSD discovery */
 #ifdef __DragonFly__
-#  define PLATFORM_OS "DragonFly BSD"
 #  define FIND_X86_CPU
+#  include "platform_dragonfly_version.h"
 #endif
 
 
 /* FreeBSD discovery */
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && !defined(__DragonFly__)
 #  include "platform_freebsd_version.h"
 #endif
 
@@ -329,12 +338,17 @@
 /* SunOS and Solaris discovery */
 #if defined(sun) || defined(__sun)
 #  if defined(__SVR4) || defined(__svr4__)
-#    define PLATFORM_OS "Solaris"
+#    include "platform_solaris_version.h"
 #  else
 #    define PLATFORM_OS "SunOS"
 #  endif
 #endif
 
+
+/* AMIX discovery */
+#ifdef __AMIX__
+#  define PLATFORM_OS "AMIX"
+#endif
 
 /* Linux discovery */
 #if defined(__linux) && !defined(__ANDROID__) && !defined(AMIGA_AROS)

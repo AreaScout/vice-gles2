@@ -1,9 +1,8 @@
 /*
- * vic20ui.h - Implementation of the C64-specific part of the UI.
+ * platform_amix_runtime_os.c - AMIX runtime version discovery.
  *
  * Written by
- *  Ettore Perazzoli <ettore@comm2000.it>
- *  Andreas Boose <viceteam@t-online.de>
+ *  Marco van den Heuvel <blackystardust68@yahoo.com>
  *
  * This file is part of VICE, the Versatile Commodore Emulator.
  * See README for copyright notice.
@@ -25,11 +24,41 @@
  *
  */
 
-#ifndef VICE_VIC20UI_H
-#define VICE_VIC20UI_H
+/* Tested and confirmed working on:
+- AMIX 2.01
+- AMIX 2.03
+- AMIX 2.1
+*/
 
-extern int vic20ui_init_early(void);
-extern int vic20ui_init(void);
-extern void vic20ui_shutdown(void);
+#include "vice.h"
 
+#ifdef __AMIX__
+
+#include <sys/utsname.h>
+#include <string.h>
+
+#include "platform.h"
+
+char platform_name[128];
+static int got_os = 0;
+
+char platform_cpu[20];
+static int got_cpu = 0;
+
+char *platform_get_amix_runtime_os(void)
+{
+    struct utsname name;
+
+    if (!got_os) {
+        uname(&name);
+        sprintf(platform_name, "AMIX %s", name.version);
+        got_os = 1;
+    }
+    return platform_name;
+}
+
+char *platform_get_amix_runtime_cpu(void)
+{
+    return "68030";
+}
 #endif
