@@ -35,9 +35,12 @@
 #include "cartridge.h"
 #include "cmdline.h"
 #include "lib.h"
+#include "log.h"
+#include "machine-video.h"
 #include "machine.h"
 #include "maincpu.h"
 #include "resources.h"
+#include "sampler.h"
 #include "sfx_soundsampler.h"
 #include "sid.h"
 #include "snapshot.h"
@@ -47,16 +50,22 @@
 
 /* ------------------------------------------------------------------------- */
 
+static BYTE current_sample = 0x80;
+
+/* ------------------------------------------------------------------------- */
+
 /* some prototypes are needed */
 static void sfx_soundsampler_sound_store(WORD addr, BYTE value);
+static BYTE sfx_soundsampler_sample_read(WORD addr);
+static void sfx_soundsampler_latch_sample(WORD addr, BYTE value);
 
-static io_source_t sfx_soundsampler_device = {
+static io_source_t sfx_soundsampler_io1_device = {
     CARTRIDGE_NAME_SFX_SOUND_SAMPLER,
     IO_DETACH_RESOURCE,
     "SFXSoundSampler",
     0xde00, 0xdeff, 0x01,
     0,
-    sfx_soundsampler_sound_store,
+    sfx_soundsampler_latch_sample,
     NULL,
     NULL, /* TODO: peek */
     NULL, /* TODO: dump */
@@ -65,10 +74,26 @@ static io_source_t sfx_soundsampler_device = {
     0
 };
 
-static io_source_list_t *sfx_soundsampler_list_item = NULL;
+static io_source_t sfx_soundsampler_io2_device = {
+    CARTRIDGE_NAME_SFX_SOUND_SAMPLER,
+    IO_DETACH_RESOURCE,
+    "SFXSoundSampler",
+    0xdf00, 0xdfff, 0x01,
+    1,
+    sfx_soundsampler_sound_store,
+    sfx_soundsampler_sample_read,
+    NULL, /* TODO: peek */
+    NULL, /* TODO: dump */
+    CARTRIDGE_SFX_SOUND_SAMPLER,
+    0,
+    0
+};
+
+static io_source_list_t *sfx_soundsampler_io1_list_item = NULL;
+static io_source_list_t *sfx_soundsampler_io2_list_item = NULL;
 
 static const c64export_resource_t export_res = {
-    CARTRIDGE_NAME_SFX_SOUND_SAMPLER, 0, 0, &sfx_soundsampler_device, NULL, CARTRIDGE_SFX_SOUND_SAMPLER
+    CARTRIDGE_NAME_SFX_SOUND_SAMPLER, 0, 0, &sfx_soundsampler_io1_device, &sfx_soundsampler_io2_device, CARTRIDGE_SFX_SOUND_SAMPLER
 };
 
 /* ------------------------------------------------------------------------- */
@@ -131,20 +156,29 @@ static int set_sfx_soundsampler_enabled(int value, void *param)
             }
             if (machine_class == VICE_MACHINE_VIC20) {
                 if (sfx_soundsampler_io_swap) {
-                    sfx_soundsampler_device.start_address = 0x9c00;
-                    sfx_soundsampler_device.end_address = 0x9fff;
+                    sfx_soundsampler_io1_device.start_address = 0x9800;
+                    sfx_soundsampler_io1_device.end_address = 0x9bff;
+                    sfx_soundsampler_io2_device.start_address = 0x9c00;
+                    sfx_soundsampler_io2_device.end_address = 0x9fff;
                 } else {
-                    sfx_soundsampler_device.start_address = 0x9800;
-                    sfx_soundsampler_device.end_address = 0x9bff;
+                    sfx_soundsampler_io1_device.start_address = 0x9c00;
+                    sfx_soundsampler_io1_device.end_address = 0x9fff;
+                    sfx_soundsampler_io2_device.start_address = 0x9800;
+                    sfx_soundsampler_io2_device.end_address = 0x9bff;
                 }
             }
-            sfx_soundsampler_list_item = io_source_register(&sfx_soundsampler_device);
+            sfx_soundsampler_io1_list_item = io_source_register(&sfx_soundsampler_io1_device);
+            sfx_soundsampler_io2_list_item = io_source_register(&sfx_soundsampler_io2_device);
             sfx_soundsampler_sound_chip.chip_enabled = 1;
+            sampler_start();
         } else {
             c64export_remove(&export_res);
-            io_source_unregister(sfx_soundsampler_list_item);
-            sfx_soundsampler_list_item = NULL;
+            io_source_unregister(sfx_soundsampler_io1_list_item);
+            io_source_unregister(sfx_soundsampler_io2_list_item);
+            sfx_soundsampler_io1_list_item = NULL;
+            sfx_soundsampler_io2_list_item = NULL;
             sfx_soundsampler_sound_chip.chip_enabled = 0;
+            sampler_stop();
         }
     }
     return 0;
@@ -249,6 +283,18 @@ int sfx_soundsampler_cmdline_options_init(void)
         }
     }
     return cmdline_register_options(cmdline_options);
+}
+
+/* ---------------------------------------------------------------------*/
+
+static void sfx_soundsampler_latch_sample(WORD addr, BYTE value)
+{
+    current_sample = sampler_get_sample();
+}
+
+static BYTE sfx_soundsampler_sample_read(WORD addr)
+{
+    return current_sample;
 }
 
 /* ---------------------------------------------------------------------*/

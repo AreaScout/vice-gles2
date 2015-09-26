@@ -8,6 +8,7 @@ ARCH_LIBS = @ARCH_LIBS@
 SUBDIRS = \
 	@RESID_DIR@ \
 	@RESID_DTV_DIR@ \
+	samplerdrv \
 	sounddrv \
 	drive \
 	vdrive \
@@ -48,6 +49,7 @@ SUBDIRS = \
 
 DIST_SUBDIRS = \
 	sounddrv \
+	samplerdrv \
 	drive \
 	vdrive \
 	fsdevice \
@@ -391,8 +393,6 @@ EMBEDDED_H_FILES = \
 	drivedos1570.h \
 	drivedos1571.h \
 	drivedos1581.h \
-	drivedos2000.h \
-	drivedos4000.h \
 	drivedos2031.h \
 	drivedos2040.h \
 	drivedos3040.h \
@@ -645,11 +645,11 @@ drivedos1571.h: $(EMBEDDED_DEPENDS) bin2c
 drivedos1581.h: $(EMBEDDED_DEPENDS) bin2c
 	./bin2c $(top_srcdir)/data/DRIVES/dos1581 drivedos1581.h "static BYTE drive_rom1581[DRIVE_ROM1581_SIZE]"
 
-drivedos2000.h: $(EMBEDDED_DEPENDS) bin2c
-	./bin2c $(top_srcdir)/data/DRIVES/dos2000 drivedos2000.h "static BYTE drive_rom2000[DRIVE_ROM2000_SIZE]"
-
-drivedos4000.h: $(EMBEDDED_DEPENDS) bin2c
-	./bin2c $(top_srcdir)/data/DRIVES/dos4000 drivedos4000.h "static BYTE drive_rom4000[DRIVE_ROM4000_SIZE]"
+#drivedos2000.h: $(EMBEDDED_DEPENDS) bin2c
+#	./bin2c $(top_srcdir)/data/DRIVES/dos2000 drivedos2000.h "static BYTE drive_rom2000[DRIVE_ROM2000_SIZE]"
+#
+#drivedos4000.h: $(EMBEDDED_DEPENDS) bin2c
+#	./bin2c $(top_srcdir)/data/DRIVES/dos4000 drivedos4000.h "static BYTE drive_rom4000[DRIVE_ROM4000_SIZE]"
 
 drivedos2031.h: $(EMBEDDED_DEPENDS) bin2c
 	./bin2c $(top_srcdir)/data/DRIVES/dos2031 drivedos2031.h "static BYTE drive_rom2031[DRIVE_ROM2031_SIZE]"
@@ -908,11 +908,11 @@ drivedos1571.h: $(EMBEDDED_DEPENDS)
 drivedos1581.h: $(EMBEDDED_DEPENDS)
 	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos1581 drivedos1581.h "static BYTE drive_rom1581[DRIVE_ROM1581_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
 
-drivedos2000.h: $(EMBEDDED_DEPENDS)
-	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos2000 drivedos2000.h "static BYTE drive_rom2000[DRIVE_ROM2000_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
-
-drivedos4000.h: $(EMBEDDED_DEPENDS)
-	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos4000 drivedos4000.h "static BYTE drive_rom4000[DRIVE_ROM4000_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
+#drivedos2000.h: $(EMBEDDED_DEPENDS)
+#	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos2000 drivedos2000.h "static BYTE drive_rom2000[DRIVE_ROM2000_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
+#
+#drivedos4000.h: $(EMBEDDED_DEPENDS)
+#	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos4000 drivedos4000.h "static BYTE drive_rom4000[DRIVE_ROM4000_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
 
 drivedos2031.h: $(EMBEDDED_DEPENDS)
 	$(SHELL) $(srcdir)/bin2c.sh $(top_srcdir)/data/DRIVES/dos2031 drivedos2031.h "static BYTE drive_rom2031[DRIVE_ROM2031_SIZE]" $(CROSS) $(SHELL) $(top_srcdir)
@@ -1098,6 +1098,7 @@ printerdrv_lib = $(top_builddir)/src/printerdrv/libprinterdrv.a
 rs232drv_lib = $(top_builddir)/src/rs232drv/librs232drv.a
 raster_lib = $(top_builddir)/src/raster/libraster.a
 rtc_lib = $(top_builddir)/src/rtc/librtc.a
+samplerdrv_lib = $(top_builddir)/src/samplerdrv/libsamplerdrv.a
 serial_lib = $(top_builddir)/src/serial/libserial.a
 sid_lib = $(top_builddir)/src/sid/libsid.a
 sounddrv_lib = $(top_builddir)/src/sounddrv/libsounddrv.a
@@ -1124,7 +1125,7 @@ ffmpeg_libs = @FFMPEG_LIBS@
 # external libraries required for all emulators
 emu_extlibs = @X_LIBS@ @UI_LIBS@ @SDL_EXTRA_LIBS@ @INTLLIBS@ @SOUND_LIBS@ @QUICKTIME_LIBS@ @JOY_LIBS@ @GFXOUTPUT_LIBS@ @ZLIB_LIBS@ @DYNLIB_LIBS@ @EDITLINE_LIBS@ @ARCH_LIBS@
 
-driver_libs = $(sounddrv_lib) $(gfxoutputdrv_lib) $(printerdrv_lib) $(rs232drv_lib) $(diskimage_lib) $(fsdevice_lib) $(tape_lib) $(fileio_lib) $(serial_lib) $(core_lib)
+driver_libs = $(samplerdrv_lib) $(sounddrv_lib) $(gfxoutputdrv_lib) $(printerdrv_lib) $(rs232drv_lib) $(diskimage_lib) $(fsdevice_lib) $(tape_lib) $(fileio_lib) $(serial_lib) $(core_lib)
 
 if HAVE_RAWDRIVE
 blockdev_lib = @ARCH_DIR@/blockdev.o
@@ -1201,6 +1202,7 @@ vsid_libs =  \
 	$(vsid_lib) \
 	$(sid_lib) \
 	$(monitor_lib) \
+	$(samplerdrv_lib) \
 	$(sounddrv_lib) \
 	$(serial_lib) \
 	$(core_lib) \
@@ -1225,6 +1227,7 @@ vsid-all: \
 	libvsid \
 	libraster \
 	libsid \
+	libsamplerdrv \
 	libsounddrv \
 	libviciivsid \
 	libvideo \
@@ -1289,6 +1292,7 @@ x64-all: \
 	libvdrive \
 	libraster \
 	libsid \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1364,6 +1368,7 @@ x64sc-all: \
 	libvdrive \
 	libraster \
 	libsid \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1437,6 +1442,7 @@ x64dtv-all: \
 	libvdrive \
 	libraster \
 	libsid \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1502,6 +1508,7 @@ xscpu64-all: \
 	libc64cartsystem \
 	libc64cart \
 	libc64commoncart \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1581,6 +1588,7 @@ x128-all: \
 	libc64cartsystem \
 	libc64cart \
 	libc64commoncart \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1660,6 +1668,7 @@ xvic-all: \
 	libparallel \
 	libvdrive \
 	libraster \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1727,6 +1736,7 @@ xpet-all: \
 	libvdrive \
 	libraster \
 	libcrtc \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1791,6 +1801,7 @@ xplus4-all: \
 	libp64 \
 	libvdrive \
 	libraster \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1848,6 +1859,7 @@ xcbm2_LDFLAGS = @xcbm2_LDFLAGS@
 xcbm2-all: \
 	$(BUILT_SOURCES) \
 	libcbm2 \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -1911,6 +1923,7 @@ xcbm5x0_LDFLAGS = @xcbm2_LDFLAGS@
 xcbm5x0-all: \
 	$(BUILT_SOURCES) \
 	libcbm5x0 \
+	libsamplerdrv \
 	libsounddrv \
 	libgfxoutputdrv \
 	libprinterdrv \
@@ -2038,11 +2051,11 @@ DISTCLEANFILES = $(BUILT_SOURCES)
 
 .PHONY: libvsid libc64 libc64sc libc128 libc64dtv libc64dtvstubs libvic20
 	libpet libplus4 libcbm2 libcbm5x0 libdrive libvdrive libprinterdrv
-	librs232drv libgfxoutputdrv libsounddrv libdiskimage libfsdevice
-	libtape libarch libvicii libviciisc libviciidtv libviciivsid libvdc
-	libsid libcrtc libvideo libserial libparallel libcore libiecbus
-	libfileio librtc libuserport libp64 libscpu64 @RESID_DEP@
-	@RESID_DTV_DEP@ @FFMPEG_DEP@
+	librs232drv libgfxoutputdrv libsamplerdrv libsounddrv libdiskimage
+	libfsdevice libtape libarch libvicii libviciisc libviciidtv
+	libviciivsid libvdc libsid libcrtc libvideo libserial libparallel
+	libcore libiecbus libfileio librtc libuserport libp64 libscpu64
+	@RESID_DEP@ @RESID_DTV_DEP@ @FFMPEG_DEP@
 
 libarch:
 	(cd arch && $(MAKE))
@@ -2134,6 +2147,8 @@ libresid:
 	(cd resid && $(MAKE) libresid.a)
 libresiddtv:
 	(cd resid-dtv && $(MAKE) libresiddtv.a)
+libsamplerdrv:
+	(cd samplerdrv && $(MAKE))
 libserial:
 	(cd serial && $(MAKE))
 libsid:
